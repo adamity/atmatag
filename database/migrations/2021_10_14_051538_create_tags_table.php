@@ -22,7 +22,7 @@ class CreateTagsTable extends Migration
             $table->string('header')->nullable();
             $table->string('description')->nullable();
             $table->string('message')->nullable();
-            $table->string('status')->nullable();
+            $table->boolean('toggle')->nullable();
             $table->timestamps();
         });
     }
