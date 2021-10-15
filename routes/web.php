@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TelegramController;
+use App\Http\Controllers\MessageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,7 +16,9 @@ use App\Http\Controllers\TelegramController;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('pages.landing');
 });
 
 Route::get('/webhook', [TelegramController::class, 'webhook']);
+Route::get('/tag/{contact_id}', [MessageController::class, 'index'])->name('tag');
+Route::post('/send', [MessageController::class, 'send'])->name('send');
