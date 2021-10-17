@@ -31,6 +31,27 @@ trait MakeComponents
         return $keyboard;
     }
 
+    private function inlineKeyboardButton($option)
+    {
+        $keyboard = [
+            'inline_keyboard' => $option,
+        ];
+
+        $keyboard = json_encode($keyboard);
+        return $keyboard;
+    }
+
+    private function inputMediaPhoto($option)
+    {
+        $inputMedia = [
+            'type' => 'photo',
+            'media' => $option,
+        ];
+
+        $inputMedia = json_encode($inputMedia);
+        return $inputMedia;
+    }
+
     private function generateContactId()
     {
         $success = false;

@@ -18,7 +18,7 @@ class MessageController extends Controller
             $contact_number = $tag->contact_number;
             $message = $tag->message;
 
-            if ($tag->status) {
+            if ($tag->toggle) {
                 return view('message.index', compact('contact_id', 'contact_number', 'message'));
             } else {
                 echo 'Tag Disabled!';
@@ -41,7 +41,7 @@ class MessageController extends Controller
         $success = false;
         $tag = Tag::where('contact_id', $contact_id)->first();
 
-        if ($tag && $tag->status) {
+        if ($tag && $tag->toggle) {
             $teleUser = $tag->telegramUser;
             $message = "<b>No Reply</b>\n<i>Message From Tag : $tag->name</i>\n\n$message";
 
