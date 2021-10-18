@@ -4,12 +4,14 @@ namespace App\Traits;
 
 use App\Models\Tag;
 use App\Models\TelegramUser;
+use App\Traits\MakeComponents;
 use App\Traits\RequestTrait;
 use Illuminate\Support\Str;
 
 trait TagTrait
 {
     use RequestTrait;
+    use MakeComponents;
 
     private function getTag($entityId, $result)
     {
@@ -29,11 +31,26 @@ trait TagTrait
                 $message .= "\n<b>Message :</b> $tag->message";
                 $message .= "\n<b>Availability :</b> $tag->toggle";
 
+                $option = [
+                    [
+                        ["text" => "Edit", "callback_data" => "tag;$tag->contact_id;edit"],
+                        ["text" => "Delete", "callback_data" => "tag;$tag->contact_id;delete"],
+                    ],
+                    [
+                        ["text" => "QR Code", "callback_data" => "qr code"],
+                        ["text" => "Testing", "url" => $tagURL],
+                    ],
+                    [
+                        ["text" => "Back to Tags List", "callback_data" => "back"],
+                    ],
+                ];
+
                 $response = $this->apiRequest('sendPhoto', [
                     'chat_id' => $result->callback_query->message->chat->id,
                     'photo' => $this->generateQrCode($tagURL),
                     'caption' => $message,
                     'parse_mode' => 'html',
+                    'reply_markup' => $this->inlineKeyboardButton($option),
                 ]);
             } else {
                 $message = "No Tag Found!\n/create - create tag";
@@ -55,15 +72,393 @@ trait TagTrait
         return $response;
     }
 
-    private function deleteTag($result)
+    private function editTag($entityId, $result)
     {
-        $telegramId = $result->message->from->id;
+        $telegramId = $result->callback_query->message->chat->id;
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $response = false;
 
         if ($teleUser) {
             if (count($teleUser->tags)) {
-                $tag = $teleUser->tags->first();
+                $tag = Tag::where('contact_id', $entityId)->first();
+                $toggling = "Enable Tag";
+                if ($tag->toggle) $toggling = "Disable Tag";
+
+                $option = [
+                    [
+                        ["text" => "Name", "callback_data" => "tag;$tag->contact_id;edit_name"],
+                        ["text" => "Contact Number", "callback_data" => "tag;$tag->contact_id;edit_num"],
+                    ],
+                    [
+                        ["text" => "Header", "callback_data" => "tag;$tag->contact_id;edit_header"],
+                        ["text" => "Description", "callback_data" => "tag;$tag->contact_id;edit_description"],
+                    ],
+                    [
+                        ["text" => "Message", "callback_data" => "tag;$tag->contact_id;edit_message"],
+                        ["text" => $toggling, "callback_data" => "tag;$tag->contact_id;toggle"],
+                    ],
+                    [
+                        ["text" => "Back", "callback_data" => "tag;$tag->contact_id;back"],
+                    ],
+                ];
+
+                $response = $this->apiRequest('editMessageCaption', [
+                    'chat_id' => $result->callback_query->message->chat->id,
+                    'message_id' => $result->callback_query->message->message_id,
+                    'caption' => $result->callback_query->message->caption,
+                    'parse_mode' => 'html',
+                    'reply_markup' => $this->inlineKeyboardButton($option),
+                ]);
+            } else {
+                $message = "No Tag Found!\n/create - create tag";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+        } else {
+            $message = "Hye There!\n/start - start the bot";
+
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+            ]);
+        }
+
+        return $response;
+    }
+
+    private function editName($entityId, $result)
+    {
+        $telegramId = $result->callback_query->message->chat->id;
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $response = false;
+
+        if ($teleUser) {
+            if (count($teleUser->tags)) {
+                $tag = Tag::where('contact_id', $entityId)->first();
+
+                $teleUser->session = "tag;$tag->contact_id;update_name";
+                $teleUser->save();
+
+                $message = "Enter new name";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            } else {
+                $message = "No Tag Found!\n/create - create tag";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+        } else {
+            $message = "Hye There!\n/start - start the bot";
+
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+            ]);
+        }
+
+        return $response;
+    }
+
+    private function editNum($entityId, $result)
+    {
+        $telegramId = $result->callback_query->message->chat->id;
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $response = false;
+
+        if ($teleUser) {
+            if (count($teleUser->tags)) {
+                $tag = Tag::where('contact_id', $entityId)->first();
+
+                $teleUser->session = "tag;$tag->contact_id;update_num";
+                $teleUser->save();
+
+                $message = "Enter new Contact Number";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            } else {
+                $message = "No Tag Found!\n/create - create tag";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+        } else {
+            $message = "Hye There!\n/start - start the bot";
+
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+            ]);
+        }
+
+        return $response;
+    }
+
+    private function editHeader($entityId, $result)
+    {
+        $telegramId = $result->callback_query->message->chat->id;
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $response = false;
+
+        if ($teleUser) {
+            if (count($teleUser->tags)) {
+                $tag = Tag::where('contact_id', $entityId)->first();
+
+                $teleUser->session = "tag;$tag->contact_id;update_header";
+                $teleUser->save();
+
+                $message = "Enter new header";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            } else {
+                $message = "No Tag Found!\n/create - create tag";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+        } else {
+            $message = "Hye There!\n/start - start the bot";
+
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+            ]);
+        }
+
+        return $response;
+    }
+
+    private function editDescription($entityId, $result)
+    {
+        $telegramId = $result->callback_query->message->chat->id;
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $response = false;
+
+        if ($teleUser) {
+            if (count($teleUser->tags)) {
+                $tag = Tag::where('contact_id', $entityId)->first();
+
+                $teleUser->session = "tag;$tag->contact_id;update_description";
+                $teleUser->save();
+
+                $message = "Enter new description";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            } else {
+                $message = "No Tag Found!\n/create - create tag";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+        } else {
+            $message = "Hye There!\n/start - start the bot";
+
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+            ]);
+        }
+
+        return $response;
+    }
+
+    private function editMessage($entityId, $result)
+    {
+        $telegramId = $result->callback_query->message->chat->id;
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $response = false;
+
+        if ($teleUser) {
+            if (count($teleUser->tags)) {
+                $tag = Tag::where('contact_id', $entityId)->first();
+
+                $teleUser->session = "tag;$tag->contact_id;update_message";
+                $teleUser->save();
+
+                $message = "Enter new message";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            } else {
+                $message = "No Tag Found!\n/create - create tag";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+        } else {
+            $message = "Hye There!\n/start - start the bot";
+
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+            ]);
+        }
+
+        return $response;
+    }
+
+    private function toggleTag($entityId, $result)
+    {
+        $telegramId = $result->callback_query->message->chat->id;
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $response = false;
+
+        if ($teleUser) {
+            if (count($teleUser->tags)) {
+                $tag = Tag::where('contact_id', $entityId)->first();
+
+                if ($tag->toggle) {
+                    $tag->toggle = null;
+                    $toggling = "Enable Tag";
+                } else {
+                    $tag->toggle = 1;
+                    $toggling = "Disable Tag";
+                }
+
+                $tag->save();
+
+                $option = [
+                    [
+                        ["text" => "Name", "callback_data" => "tag;$tag->contact_id;edit_name"],
+                        ["text" => "Contact Number", "callback_data" => "tag;$tag->contact_id;edit_num"],
+                    ],
+                    [
+                        ["text" => "Header", "callback_data" => "tag;$tag->contact_id;edit_header"],
+                        ["text" => "Description", "callback_data" => "tag;$tag->contact_id;edit_description"],
+                    ],
+                    [
+                        ["text" => "Message", "callback_data" => "tag;$tag->contact_id;edit_message"],
+                        ["text" => $toggling, "callback_data" => "tag;$tag->contact_id;toggle"],
+                    ],
+                    [
+                        ["text" => "Back", "callback_data" => "tag;$tag->contact_id;back"],
+                    ],
+                ];
+
+                $response = $this->apiRequest('editMessageCaption', [
+                    'chat_id' => $result->callback_query->message->chat->id,
+                    'message_id' => $result->callback_query->message->message_id,
+                    'caption' => $result->callback_query->message->caption,
+                    'parse_mode' => 'html',
+                    'reply_markup' => $this->inlineKeyboardButton($option),
+                ]);
+            } else {
+                $message = "No Tag Found!\n/create - create tag";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+        } else {
+            $message = "Hye There!\n/start - start the bot";
+
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+            ]);
+        }
+
+        return $response;
+    }
+
+    private function deleteTag($entityId, $result)
+    {
+        $telegramId = $result->callback_query->message->chat->id;
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $response = false;
+
+        if ($teleUser) {
+            if (count($teleUser->tags)) {
+                $tag = Tag::where('contact_id', $entityId)->first();
+                // $tag->delete();
+
+                // $message = "Tag Deleted!\n/create - create tags";
+
+                // $response = $this->apiRequest('sendMessage', [
+                //     'chat_id' => $telegramId,
+                //     'text' => $message,
+                // ]);
+
+                $teleUser->session = "tag;$tag->contact_id;delete";
+                $teleUser->save();
+
+                $message = "Are you sure to delete this tag?";
+
+                $option = [
+                    [
+                        ["text" => "Yes", "callback_data" => "tag;$tag->contact_id;confirm_delete"],
+                        ["text" => "No", "callback_data" => "tag;$tag->contact_id;cancel_delete"],
+                    ],
+                ];
+
+                $response = $this->apiRequest('editMessageCaption', [
+                    'chat_id' => $result->callback_query->message->chat->id,
+                    'message_id' => $result->callback_query->message->message_id,
+                    'caption' => $message,
+                    'parse_mode' => 'html',
+                    'reply_markup' => $this->inlineKeyboardButton($option),
+                ]);
+            } else {
+                $message = "No Tag Found!\n/create - create tag";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+        } else {
+            $message = "Hye There!\n/start - start the bot";
+
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+            ]);
+        }
+
+        return $response;
+    }
+
+    private function confirmDeleteTag($entityId, $result)
+    {
+        $telegramId = $result->callback_query->message->chat->id;
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $response = false;
+
+        if ($teleUser) {
+            if (count($teleUser->tags)) {
+                $tag = Tag::where('contact_id', $entityId)->first();
                 $tag->delete();
+
+                $teleUser->session = null;
+                $teleUser->save();
 
                 $message = "Tag Deleted!\n/create - create tags";
 
@@ -91,10 +486,41 @@ trait TagTrait
         return $response;
     }
 
-    private function editTag($result)
+    private function cancelDeleteTag($entityId, $result)
     {
-        $telegramId = $result->message->from->id;
+        $telegramId = $result->callback_query->message->chat->id;
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $response = false;
+
+        if ($teleUser) {
+            if (count($teleUser->tags)) {
+                $teleUser->session = null;
+                $teleUser->save();
+
+                $message = "Cancel delete!";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            } else {
+                $message = "No Tag Found!\n/create - create tag";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+        } else {
+            $message = "Hye There!\n/start - start the bot";
+
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+            ]);
+        }
+
+        return $response;
     }
 
     private function generateQrCode($tagURL)

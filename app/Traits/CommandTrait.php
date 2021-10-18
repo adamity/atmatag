@@ -178,6 +178,81 @@ trait CommandTrait
                     'text' => $message,
                 ]);
             }
+
+            if ($entityAttribute == 'update_name') {
+                $tag->name = $action;
+                $tag->save();
+
+                $teleUser->session = null;
+                $teleUser->save();
+
+                $message = "Name updated";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+
+            if ($entityAttribute == 'update_num') {
+                $tag->contact_number = $action;
+                $tag->save();
+
+                $teleUser->session = null;
+                $teleUser->save();
+
+                $message = "Number updated";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+
+            if ($entityAttribute == 'update_header') {
+                $tag->header = $action;
+                $tag->save();
+
+                $teleUser->session = null;
+                $teleUser->save();
+
+                $message = "Header updated";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+
+            if ($entityAttribute == 'update_description') {
+                $tag->description = $action;
+                $tag->save();
+
+                $teleUser->session = null;
+                $teleUser->save();
+
+                $message = "Description updated";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
+
+            if ($entityAttribute == 'update_message') {
+                $tag->message = $action;
+                $tag->save();
+
+                $teleUser->session = null;
+                $teleUser->save();
+
+                $message = "Message updated";
+
+                $response = $this->apiRequest('sendMessage', [
+                    'chat_id' => $telegramId,
+                    'text' => $message,
+                ]);
+            }
         }
 
         return $response;

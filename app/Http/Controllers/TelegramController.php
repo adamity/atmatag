@@ -52,7 +52,7 @@ class TelegramController extends Controller
         if ($action == '/start') $response = $this->startBot($result);
         if ($action == '/create') $response = $this->createTag($result);
         if ($action == '/tags') $response = $this->getTags($result);
-        if ($action == '/delete') $response = $this->deleteTag($result);
+        // if ($action == '/delete') $response = $this->deleteTag($result);
 
         if (!isset($response)) $response = $this->getCommands($result);
         return $response;
@@ -62,13 +62,28 @@ class TelegramController extends Controller
     {
         $data = $result->callback_query->data;
         $data = explode(";", $data);
-        $response = false;
+        $response = $data;
 
-        $entityType = $data[0];
-        $entityId = $data[1];
-        $entityAttribute = $data[2];
+        if (count($data) == 3) {
+            $entityType = $data[0];
+            $entityId = $data[1];
+            $entityAttribute = $data[2];
+    
+            if ($entityType == 'tag' && $entityAttribute == 'get') $response = $this->getTag($entityId, $result);
+            if ($entityType == 'tag' && $entityAttribute == 'edit') $response = $this->editTag($entityId, $result);
+            if ($entityType == 'tag' && $entityAttribute == 'delete') $response = $this->deleteTag($entityId, $result);
+            if ($entityType == 'tag' && $entityAttribute == 'toggle') $response = $this->toggleTag($entityId, $result);
 
-        if ($entityType == 'tag' && $entityAttribute == 'get') $response = $this->getTag($entityId, $result);
+            if ($entityType == 'tag' && $entityAttribute == 'edit_name') $response = $this->editName($entityId, $result);
+            if ($entityType == 'tag' && $entityAttribute == 'edit_num') $response = $this->editNum($entityId, $result);
+            if ($entityType == 'tag' && $entityAttribute == 'edit_header') $response = $this->editHeader($entityId, $result);
+
+            if ($entityType == 'tag' && $entityAttribute == 'edit_description') $response = $this->editDescription($entityId, $result);
+            if ($entityType == 'tag' && $entityAttribute == 'edit_message') $response = $this->editMessage($entityId, $result);
+
+            if ($entityType == 'tag' && $entityAttribute == 'confirm_delete') $response = $this->confirmDeleteTag($entityId, $result);
+            if ($entityType == 'tag' && $entityAttribute == 'cancel_delete') $response = $this->cancelDeleteTag($entityId, $result);
+        }
 
         return $response;
     }
