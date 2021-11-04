@@ -14,56 +14,22 @@ trait CommandTrait
     use MakeComponents;
     use TagTrait;
 
-    private function getCommands($result)
-    {
-        $telegramId = $result->message->from->id;
-        $message = "What Can I Help?\n\n/create - create tag\n/tags - get tags\n/delete - delete tag";
-
-        $response = $this->apiRequest('sendMessage', [
-            'chat_id' => $telegramId,
-            'text' => $message,
-        ]);
-
-        return $response;
-    }
-
-    private function startBot($result)
-    {
-        $telegramId = $result->message->from->id;
-        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
-
-        $message = "Welcome Back!\n\n/create - create tag\n/tags - get tags\n/delete - delete tag";
-
-        if (!$teleUser) {
-            $teleUser = new TelegramUser();
-            $teleUser->telegram_id = $telegramId;
-            $teleUser->tag_limit = 2;
-            $teleUser->save();
-
-            $message = "Hye There!\n\n/create - create tag\n/tags - get tags\n/delete - delete tag";
-        }
-
-        $response = $this->apiRequest('sendMessage', [
-            'chat_id' => $telegramId,
-            'text' => $message,
-        ]);
-
-        return $response;
-    }
-
     private function createTag($result)
     {
         $telegramId = $result->message->from->id;
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
 
-        if ($teleUser) {
-            if (count($teleUser->tags) < $teleUser->tag_limit) {
+        if (!$teleUser) {
+            $response = $this->startBot($result);
+        } else {
+            if (count($teleUser->tags) >= $teleUser->tag_limit) {
+                $message = "Limit exceed!\n/tags - get tags";
+            } else {
                 $contact_id = $this->generateContactId();
 
                 $tag = new Tag();
                 $tag->telegram_user_id = $teleUser->id;
                 $tag->contact_id = $contact_id;
-                $tag->name = "New Tag";
                 $tag->header = "Contact Me";
                 $tag->description = "Send me a message in case of emergency";
                 $tag->message = "Hye there! Send me a message in case of emergency";
@@ -73,26 +39,13 @@ trait CommandTrait
                 $teleUser->session = "tag;$tag->contact_id;name";
                 $teleUser->save();
 
-                $message = "What should we call this tag?\nEnter /cancel to cancel the operation.";
-
-                $response = $this->apiRequest('sendMessage', [
-                    'chat_id' => $telegramId,
-                    'text' => $message,
-                ]);
-            } else {
-                $message = "Limit exceed!\n/tags - get tags";
-
-                $response = $this->apiRequest('sendMessage', [
-                    'chat_id' => $telegramId,
-                    'text' => $message,
-                ]);
+                $message = "What should we call this tag?";
             }
-        } else {
-            $message = "Hye There!\n/start - start the bot";
 
             $response = $this->apiRequest('sendMessage', [
                 'chat_id' => $telegramId,
                 'text' => $message,
+                'reply_markup' => $this->removeKeyboardButton(),
             ]);
         }
 
@@ -161,7 +114,9 @@ trait CommandTrait
         $entityId = $data[1];
         $entityAttribute = $data[2];
 
-        if ($entityType == 'tag') {
+        if ($action == "/cancel") {
+            $response = $this->cancelOperation($result);
+        } else if ($entityType == 'tag') {
             $tag = Tag::where('contact_id', $entityId)->first();
 
             if ($entityAttribute == 'name') {

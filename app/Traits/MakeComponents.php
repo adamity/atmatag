@@ -2,8 +2,75 @@
 
 namespace App\Traits;
 
+use App\Models\Tag;
+use App\Models\TelegramUser;
+
 trait MakeComponents
 {
+    private function getCommands($result)
+    {
+        $telegramId = $result->message->from->id;
+        $message = "<b>Commands :</b> \n\n/create - create tag\n/tags - get tags";
+
+        $response = $this->apiRequest('sendMessage', [
+            'chat_id' => $telegramId,
+            'text' => $message,
+            'parse_mode' => 'html',
+        ]);
+
+        return $response;
+    }
+
+    private function startBot($result)
+    {
+        $telegramId = $result->message->from->id;
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+
+        if (!$teleUser) {
+            $teleUser = new TelegramUser();
+            $teleUser->telegram_id = $telegramId;
+            $teleUser->tag_limit = 2;
+            $teleUser->save();
+        }
+
+        $response = $this->getCommands($result);
+        return $response;
+    }
+
+    private function cancelOperation($result)
+    {
+        $telegramId = $result->message->from->id;
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+
+        $message = "No active command.";
+        if ($teleUser && $teleUser->session) {
+            $session = explode(";", $teleUser->session);
+
+            if (count($session) == 3) {
+                $entityType = $session[0];
+                $entityId = $session[1];
+                $entityAttribute = $session[2];
+        
+                if ($entityType == 'tag' && $entityAttribute == 'name') {
+                    $tag = Tag::where('contact_id', $entityId)->first();
+                    $tag->delete();
+                }
+            }
+
+            $teleUser->session = null;
+            $teleUser->save();
+
+            $message = "Operation cancelled.";
+        }
+
+        $response = $this->apiRequest('sendMessage', [
+            'chat_id' => $telegramId,
+            'text' => $message,
+        ]);
+
+        return $response;
+    }
+
     private function keyboardButton($option)
     {
         $keyboard = [

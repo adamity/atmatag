@@ -47,14 +47,20 @@ class TelegramController extends Controller
         $telegramId = $result->message->from->id;
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
 
-        if ($teleUser && $teleUser->session) $response = $this->updateSession($result);
-
-        if ($action == '/start') $response = $this->startBot($result);
-        if ($action == '/create') $response = $this->createTag($result);
-        if ($action == '/tags') $response = $this->getTags($result);
-        // if ($action == '/delete') $response = $this->deleteTag($result);
-
-        if (!isset($response)) $response = $this->getCommands($result);
+        if ($teleUser && $teleUser->session) {
+            $response = $this->updateSession($result);
+        } else if ($action == '/start') {
+            $response = $this->startBot($result);
+        } else if ($action == '/create') {
+            $response = $this->createTag($result);
+        } else if ($action == '/tags') {
+            $response = $this->getTags($result);
+        } else if ($action == '/cancel') {
+            $response = $this->cancelOperation($result);
+        } else {
+            $response = $this->getCommands($result);
+        }
+        
         return $response;
     }
 

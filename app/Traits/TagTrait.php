@@ -17,9 +17,10 @@ trait TagTrait
     {
         $telegramId = $result->callback_query->message->chat->id;
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
-        $response = false;
 
-        if ($teleUser) {
+        if (!$teleUser) {
+            $response = $this->startBot($result);
+        } else {
             if (count($teleUser->tags)) {
                 $tag = Tag::where('contact_id', $entityId)->first();
                 $tagURL = preg_replace("/^http:/i", "https:", url(route('tag', ['contact_id' => $tag->contact_id])));
@@ -60,13 +61,6 @@ trait TagTrait
                     'text' => $message,
                 ]);
             }
-        } else {
-            $message = "Hye There!\n/start - start the bot";
-
-            $response = $this->apiRequest('sendMessage', [
-                'chat_id' => $telegramId,
-                'text' => $message,
-            ]);
         }
 
         return $response;
