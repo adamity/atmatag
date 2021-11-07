@@ -13,13 +13,13 @@ trait TagTrait
     use RequestTrait;
     use MakeComponents;
 
-    private function getTag($entityId, $result)
+    private function getTag($entityId, $telegramId, $result)
     {
-        $telegramId = $result->callback_query->message->chat->id;
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
 
         if (!$teleUser) {
-            $response = $this->startBot($result);
+            // KIV : This will return error because the $result passed is not the expected one
+            // $response = $this->startBot($result);
         } else {
             if (count($teleUser->tags)) {
                 $tag = Tag::where('contact_id', $entityId)->first();
@@ -47,7 +47,7 @@ trait TagTrait
                 ];
 
                 $response = $this->apiRequest('sendPhoto', [
-                    'chat_id' => $result->callback_query->message->chat->id,
+                    'chat_id' => $telegramId,
                     'photo' => $this->generateQrCode($tagURL),
                     'caption' => $message,
                     'parse_mode' => 'html',

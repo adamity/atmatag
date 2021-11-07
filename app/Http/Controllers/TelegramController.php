@@ -70,12 +70,14 @@ class TelegramController extends Controller
         $data = explode(";", $data);
         $response = $data;
 
+        $telegramId = $result->callback_query->from->id;
+
         if (count($data) == 3) {
             $entityType = $data[0];
             $entityId = $data[1];
             $entityAttribute = $data[2];
     
-            if ($entityType == 'tag' && $entityAttribute == 'get') $response = $this->getTag($entityId, $result);
+            if ($entityType == 'tag' && $entityAttribute == 'get') $response = $this->getTag($entityId, $telegramId, $result);
             if ($entityType == 'tag' && $entityAttribute == 'edit') $response = $this->editTag($entityId, $result);
             if ($entityType == 'tag' && $entityAttribute == 'delete') $response = $this->deleteTag($entityId, $result);
             if ($entityType == 'tag' && $entityAttribute == 'toggle') $response = $this->toggleTag($entityId, $result);

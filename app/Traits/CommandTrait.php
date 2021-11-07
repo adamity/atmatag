@@ -126,12 +126,7 @@ trait CommandTrait
                 $teleUser->session = null;
                 $teleUser->save();
 
-                $message = "Tag Created!\n/tags - get tags";
-
-                $response = $this->apiRequest('sendMessage', [
-                    'chat_id' => $telegramId,
-                    'text' => $message,
-                ]);
+                $response = $this->getTag($entityId, $telegramId, $result);
             }
 
             if ($entityAttribute == 'update_name') {
