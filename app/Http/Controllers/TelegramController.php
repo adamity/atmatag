@@ -58,7 +58,7 @@ class TelegramController extends Controller
         } else if ($action == '/cancel') {
             $response = $this->cancelOperation($result);
         } else {
-            $response = $this->getCommands($result);
+            $response = $this->getCommands($result, null);
         }
         
         return $response;
@@ -81,6 +81,8 @@ class TelegramController extends Controller
             if ($entityType == 'tag' && $entityAttribute == 'edit') $response = $this->editTag($entityId, $result);
             if ($entityType == 'tag' && $entityAttribute == 'delete') $response = $this->deleteTag($entityId, $result);
             if ($entityType == 'tag' && $entityAttribute == 'toggle') $response = $this->toggleTag($entityId, $result);
+            if ($entityType == 'tag' && $entityAttribute == 'qr_code') $response = $this->getQrCode($entityId, $result);
+            if ($entityType == 'tag' && $entityAttribute == 'tag_list') $response = $this->getTags($result);
 
             if ($entityType == 'tag' && $entityAttribute == 'edit_name') $response = $this->editName($entityId, $result);
             if ($entityType == 'tag' && $entityAttribute == 'edit_num') $response = $this->editNum($entityId, $result);

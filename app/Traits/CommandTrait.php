@@ -23,7 +23,9 @@ trait CommandTrait
             $response = $this->startBot($result);
         } else {
             if (count($teleUser->tags) >= $teleUser->tag_limit) {
-                $message = "Limit exceed!\n/tags - get tags";
+                $message = "Limit exceed!";
+                $response = $this->getCommands($result, $message);
+                return $response;
             } else {
                 $contact_id = $this->generateContactId();
 
@@ -42,10 +44,16 @@ trait CommandTrait
                 $message = "What should we call this tag?";
             }
 
+            $option = [
+                [
+                    ["text" => "Cancel"],
+                ],
+            ];
+
             $response = $this->apiRequest('sendMessage', [
                 'chat_id' => $telegramId,
                 'text' => $message,
-                'reply_markup' => $this->removeKeyboardButton(),
+                'reply_markup' => $this->keyboardButton($option),
             ]);
         }
 
@@ -54,7 +62,14 @@ trait CommandTrait
 
     private function getTags($result)
     {
-        $telegramId = $result->message->from->id;
+        if (isset($result->message)) {
+            $telegramId = $result->message->from->id;
+            $sendMessage = true;
+        } else if (isset($result->callback_query)) {
+            $telegramId = $result->callback_query->from->id;
+            $sendMessage = false;
+        }
+
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
 
         if ($teleUser) {
@@ -75,11 +90,20 @@ trait CommandTrait
 
                 $message = "Choose your tag from the list below:";
 
-                $response = $this->apiRequest('sendMessage', [
-                    'chat_id' => $telegramId,
-                    'text' => $message,
-                    'reply_markup' => $this->inlineKeyboardButton($option),
-                ]);
+                if ($sendMessage) {
+                    $response = $this->apiRequest('sendMessage', [
+                        'chat_id' => $telegramId,
+                        'text' => $message,
+                        'reply_markup' => $this->inlineKeyboardButton($option),
+                    ]);
+                } else {
+                    $response = $this->apiRequest('editMessageText', [
+                        'chat_id' => $telegramId,
+                        'message_id' => $result->callback_query->message->message_id,
+                        'text' => $message,
+                        'reply_markup' => $this->inlineKeyboardButton($option),
+                    ]);
+                }
             } else {
                 $message = "No Tag Found!\n/create - create tag";
 
@@ -145,13 +169,18 @@ trait CommandTrait
             }
 
             if ($entityAttribute == 'update_num') {
-                $tag->contact_number = $action;
+                if ($action == "/delete") {
+                    $tag->contact_number = null;
+                    $message = "Contact Number deleted";
+                } else {
+                    $tag->contact_number = $action;
+                    $message = "Contact Number updated";
+                }
                 $tag->save();
 
                 $teleUser->session = null;
                 $teleUser->save();
 
-                $message = "Number updated";
 
                 $response = $this->apiRequest('sendMessage', [
                     'chat_id' => $telegramId,

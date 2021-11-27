@@ -7,15 +7,32 @@ use App\Models\TelegramUser;
 
 trait MakeComponents
 {
-    private function getCommands($result)
+    private function getCommands($result, $text)
     {
-        $telegramId = $result->message->from->id;
+        if (isset($result->message)) {
+            $telegramId = $result->message->from->id;
+        } else if (isset($result->callback_query)) {
+            $telegramId = $result->callback_query->from->id;
+        }
+
         $message = "<b>Commands :</b> \n\n/create - create tag\n/tags - get tags";
+        if ($text) $message = $text . "\n\n" . $message;
+
+        $option = [
+            [
+                ["text" => "Create Tag"],
+                ["text" => "Get Tags"],
+            ],
+            [
+                ["text" => "Buy Me a Coffee"],
+            ],
+        ];
 
         $response = $this->apiRequest('sendMessage', [
             'chat_id' => $telegramId,
             'text' => $message,
             'parse_mode' => 'html',
+            'reply_markup' => $this->keyboardButton($option),
         ]);
 
         return $response;
@@ -23,7 +40,12 @@ trait MakeComponents
 
     private function startBot($result)
     {
-        $telegramId = $result->message->from->id;
+        if (isset($result->message)) {
+            $telegramId = $result->message->from->id;
+        } else if (isset($result->callback_query)) {
+            $telegramId = $result->callback_query->from->id;
+        }
+
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
 
         if (!$teleUser) {
@@ -33,7 +55,7 @@ trait MakeComponents
             $teleUser->save();
         }
 
-        $response = $this->getCommands($result);
+        $response = $this->getCommands($result, null);
         return $response;
     }
 
@@ -63,9 +85,20 @@ trait MakeComponents
             $message = "Operation cancelled.";
         }
 
+        $option = [
+            [
+                ["text" => "Create Tag"],
+                ["text" => "Get Tags"],
+            ],
+            [
+                ["text" => "Buy Me a Coffee"],
+            ],
+        ];
+
         $response = $this->apiRequest('sendMessage', [
             'chat_id' => $telegramId,
             'text' => $message,
+            'reply_markup' => $this->keyboardButton($option),
         ]);
 
         return $response;
