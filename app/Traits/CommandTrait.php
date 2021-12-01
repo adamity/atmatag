@@ -46,7 +46,7 @@ trait CommandTrait
 
             $option = [
                 [
-                    ["text" => "Cancel"],
+                    ["text" => "❌ Cancel"],
                 ],
             ];
 
@@ -138,7 +138,7 @@ trait CommandTrait
         $entityId = $data[1];
         $entityAttribute = $data[2];
 
-        if ($action == "/cancel") {
+        if ($action == "/cancel" || $action == '❌ Cancel') {
             $response = $this->cancelOperation($result);
         } else if ($entityType == 'tag') {
             $tag = Tag::where('contact_id', $entityId)->first();
@@ -169,7 +169,7 @@ trait CommandTrait
             }
 
             if ($entityAttribute == 'update_num') {
-                if ($action == "/delete") {
+                if ($action == "/delete" || $action == '🗑️ Delete') {
                     $tag->contact_number = null;
                     $message = "Contact Number deleted";
                 } else {
@@ -181,10 +181,20 @@ trait CommandTrait
                 $teleUser->session = null;
                 $teleUser->save();
 
+                $option = [
+                    [
+                        ["text" => "🏷️ Create Tag"],
+                        ["text" => "📦 Get Tags"],
+                    ],
+                    [
+                        ["text" => "☕ Buy Me a Coffee"],
+                    ],
+                ];
 
                 $response = $this->apiRequest('sendMessage', [
                     'chat_id' => $telegramId,
                     'text' => $message,
+                    'reply_markup' => $this->keyboardButton($option),
                 ]);
             }
 

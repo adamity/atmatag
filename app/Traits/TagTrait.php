@@ -162,9 +162,16 @@ trait TagTrait
 
                 $message = "Enter new name";
 
+                $option = [
+                    [
+                        ["text" => "❌ Cancel"],
+                    ],
+                ];
+
                 $response = $this->apiRequest('sendMessage', [
                     'chat_id' => $telegramId,
                     'text' => $message,
+                    'reply_markup' => $this->keyboardButton($option),
                 ]);
             } else {
                 $message = "No Tag Found!\n/create - create tag";
@@ -201,9 +208,17 @@ trait TagTrait
 
                 $message = "Enter new Contact Number\n/delete - delete contact number";
 
+                $option = [
+                    [
+                        ["text" => "❌ Cancel"],
+                        ["text" => "🗑️ Delete"],
+                    ],
+                ];
+
                 $response = $this->apiRequest('sendMessage', [
                     'chat_id' => $telegramId,
                     'text' => $message,
+                    'reply_markup' => $this->keyboardButton($option),
                 ]);
             } else {
                 $message = "No Tag Found!\n/create - create tag";
@@ -240,9 +255,16 @@ trait TagTrait
 
                 $message = "Enter new header";
 
+                $option = [
+                    [
+                        ["text" => "❌ Cancel"],
+                    ],
+                ];
+
                 $response = $this->apiRequest('sendMessage', [
                     'chat_id' => $telegramId,
                     'text' => $message,
+                    'reply_markup' => $this->keyboardButton($option),
                 ]);
             } else {
                 $message = "No Tag Found!\n/create - create tag";
@@ -279,9 +301,16 @@ trait TagTrait
 
                 $message = "Enter new description";
 
+                $option = [
+                    [
+                        ["text" => "❌ Cancel"],
+                    ],
+                ];
+
                 $response = $this->apiRequest('sendMessage', [
                     'chat_id' => $telegramId,
                     'text' => $message,
+                    'reply_markup' => $this->keyboardButton($option),
                 ]);
             } else {
                 $message = "No Tag Found!\n/create - create tag";
@@ -318,9 +347,16 @@ trait TagTrait
 
                 $message = "Enter new message";
 
+                $option = [
+                    [
+                        ["text" => "❌ Cancel"],
+                    ],
+                ];
+
                 $response = $this->apiRequest('sendMessage', [
                     'chat_id' => $telegramId,
                     'text' => $message,
+                    'reply_markup' => $this->keyboardButton($option),
                 ]);
             } else {
                 $message = "No Tag Found!\n/create - create tag";

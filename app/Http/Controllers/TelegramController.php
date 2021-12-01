@@ -51,11 +51,11 @@ class TelegramController extends Controller
             $response = $this->updateSession($result);
         } else if ($action == '/start') {
             $response = $this->startBot($result);
-        } else if ($action == '/create') {
+        } else if ($action == '/create' || $action == '🏷️ Create Tag') {
             $response = $this->createTag($result);
-        } else if ($action == '/tags') {
+        } else if ($action == '/tags' || $action == '📦 Get Tags') {
             $response = $this->getTags($result);
-        } else if ($action == '/cancel') {
+        } else if ($action == '/cancel' || $action == '❌ Cancel') {
             $response = $this->cancelOperation($result);
         } else {
             $response = $this->getCommands($result, null);

@@ -20,11 +20,11 @@ trait MakeComponents
 
         $option = [
             [
-                ["text" => "Create Tag"],
-                ["text" => "Get Tags"],
+                ["text" => "🏷️ Create Tag"],
+                ["text" => "📦 Get Tags"],
             ],
             [
-                ["text" => "Buy Me a Coffee"],
+                ["text" => "☕ Buy Me a Coffee"],
             ],
         ];
 
@@ -87,11 +87,11 @@ trait MakeComponents
 
         $option = [
             [
-                ["text" => "Create Tag"],
-                ["text" => "Get Tags"],
+                ["text" => "🏷️ Create Tag"],
+                ["text" => "📦 Get Tags"],
             ],
             [
-                ["text" => "Buy Me a Coffee"],
+                ["text" => "☕ Buy Me a Coffee"],
             ],
         ];
 
