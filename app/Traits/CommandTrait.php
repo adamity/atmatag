@@ -236,6 +236,8 @@ trait CommandTrait
             }
 
             if ($entityAttribute == 'update_header') {
+                if ($action == "↪️ Use Default") $action = "Contact Me";
+
                 if ($this->validateText($action, 20)) {
                     $tag->header = $action;
                     $teleUser->session = null;
@@ -269,6 +271,8 @@ trait CommandTrait
             }
 
             if ($entityAttribute == 'update_description') {
+                if ($action == "↪️ Use Default") $action = "Send me a message in case of emergency";
+
                 if ($this->validateText($action, 50)) {
                     $tag->description = $action;
                     $teleUser->session = null;
@@ -302,6 +306,8 @@ trait CommandTrait
             }
 
             if ($entityAttribute == 'update_message') {
+                if ($action == "↪️ Use Default") $action = "Hye there! Send me a message in case of emergency";
+
                 if ($this->validateText($action, 255)) {
                     $tag->message = $action;
                     $teleUser->session = null;
