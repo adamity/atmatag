@@ -206,12 +206,12 @@ trait TagTrait
                 $teleUser->session = "tag;$tag->contact_id;update_num";
                 $teleUser->save();
 
-                $message = "Enter new Contact Number\n/delete - delete contact number";
+                $message = "Enter new Contact Number\n/unset - unset contact number";
 
                 $option = [
                     [
                         ["text" => "❌ Cancel"],
-                        ["text" => "🗑️ Delete"],
+                        ["text" => "↪️ Unset Number"],
                     ],
                 ];
 
@@ -258,6 +258,7 @@ trait TagTrait
                 $option = [
                     [
                         ["text" => "❌ Cancel"],
+                        ["text" => "↪️ Use Default"],
                     ],
                 ];
 
@@ -304,6 +305,7 @@ trait TagTrait
                 $option = [
                     [
                         ["text" => "❌ Cancel"],
+                        ["text" => "↪️ Use Default"],
                     ],
                 ];
 
@@ -350,6 +352,7 @@ trait TagTrait
                 $option = [
                     [
                         ["text" => "❌ Cancel"],
+                        ["text" => "↪️ Use Default"],
                     ],
                 ];
 

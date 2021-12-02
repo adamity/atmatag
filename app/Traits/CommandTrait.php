@@ -7,6 +7,7 @@ use App\Traits\MakeComponents;
 use App\Traits\RequestTrait;
 use App\Traits\TagTrait;
 use App\Models\TelegramUser;
+use Faker\Provider\Lorem;
 
 trait CommandTrait
 {
@@ -154,42 +155,78 @@ trait CommandTrait
             }
 
             if ($entityAttribute == 'update_name') {
-                $tag->name = $action;
-                $tag->save();
+                if ($this->validateText($action, 50)) {
+                    $tag->name = $action;
+                    $teleUser->session = null;
+                    $option = [
+                        [
+                            ["text" => "🏷️ Create Tag"],
+                            ["text" => "📦 Get Tags"],
+                        ],
+                        [
+                            ["text" => "☕ Buy Me a Coffee"],
+                        ],
+                    ];
 
-                $teleUser->session = null;
-                $teleUser->save();
+                    $tag->save();
+                    $teleUser->save();
 
-                $message = "Name updated";
+                    $message = "Name updated";
 
-                $response = $this->apiRequest('sendMessage', [
-                    'chat_id' => $telegramId,
-                    'text' => $message,
-                ]);
+                    $response = $this->apiRequest('sendMessage', [
+                        'chat_id' => $telegramId,
+                        'text' => $message,
+                        'reply_markup' => $this->keyboardButton($option),
+                    ]);
+                } else {
+                    $message = "Invalid name!";
+                    $response = $this->apiRequest('sendMessage', [
+                        'chat_id' => $telegramId,
+                        'text' => $message,
+                    ]);
+                }
             }
 
             if ($entityAttribute == 'update_num') {
-                if ($action == "/delete" || $action == '🗑️ Delete') {
+                if ($action == "/unset" || $action == '↪️ Unset Number') {
                     $tag->contact_number = null;
                     $message = "Contact Number deleted";
-                } else {
+                    $option = [
+                        [
+                            ["text" => "🏷️ Create Tag"],
+                            ["text" => "📦 Get Tags"],
+                        ],
+                        [
+                            ["text" => "☕ Buy Me a Coffee"],
+                        ],
+                    ];
+
+                    $teleUser->session = null;
+                } else if ($this->validatePhoneNumber($action)) {
                     $tag->contact_number = $action;
                     $message = "Contact Number updated";
+                    $option = [
+                        [
+                            ["text" => "🏷️ Create Tag"],
+                            ["text" => "📦 Get Tags"],
+                        ],
+                        [
+                            ["text" => "☕ Buy Me a Coffee"],
+                        ],
+                    ];
+
+                    $teleUser->session = null;
+                } else {
+                    $message = "Invalid Contact Number";
+                    $option = [
+                        [
+                            ["text" => "❌ Cancel"],
+                            ["text" => "↪️ Unset Number"],
+                        ],
+                    ];
                 }
                 $tag->save();
-
-                $teleUser->session = null;
                 $teleUser->save();
-
-                $option = [
-                    [
-                        ["text" => "🏷️ Create Tag"],
-                        ["text" => "📦 Get Tags"],
-                    ],
-                    [
-                        ["text" => "☕ Buy Me a Coffee"],
-                    ],
-                ];
 
                 $response = $this->apiRequest('sendMessage', [
                     'chat_id' => $telegramId,
@@ -199,51 +236,131 @@ trait CommandTrait
             }
 
             if ($entityAttribute == 'update_header') {
-                $tag->header = $action;
+                if ($this->validateText($action, 20)) {
+                    $tag->header = $action;
+                    $teleUser->session = null;
+                    $message = "Header updated";
+                    $option = [
+                        [
+                            ["text" => "🏷️ Create Tag"],
+                            ["text" => "📦 Get Tags"],
+                        ],
+                        [
+                            ["text" => "☕ Buy Me a Coffee"],
+                        ],
+                    ];
+                } else {
+                    $message = "Invalid header!";
+                    $option = [
+                        [
+                            ["text" => "❌ Cancel"],
+                            ["text" => "↪️ Use Default"],
+                        ],
+                    ];
+                }
                 $tag->save();
-
-                $teleUser->session = null;
                 $teleUser->save();
-
-                $message = "Header updated";
 
                 $response = $this->apiRequest('sendMessage', [
                     'chat_id' => $telegramId,
                     'text' => $message,
+                    'reply_markup' => $this->keyboardButton($option),
                 ]);
             }
 
             if ($entityAttribute == 'update_description') {
-                $tag->description = $action;
+                if ($this->validateText($action, 50)) {
+                    $tag->description = $action;
+                    $teleUser->session = null;
+                    $message = "Description updated";
+                    $option = [
+                        [
+                            ["text" => "🏷️ Create Tag"],
+                            ["text" => "📦 Get Tags"],
+                        ],
+                        [
+                            ["text" => "☕ Buy Me a Coffee"],
+                        ],
+                    ];
+                } else {
+                    $message = "Invalid description!";
+                    $option = [
+                        [
+                            ["text" => "❌ Cancel"],
+                            ["text" => "↪️ Use Default"],
+                        ],
+                    ];
+                }
                 $tag->save();
-
-                $teleUser->session = null;
                 $teleUser->save();
-
-                $message = "Description updated";
 
                 $response = $this->apiRequest('sendMessage', [
                     'chat_id' => $telegramId,
                     'text' => $message,
+                    'reply_markup' => $this->keyboardButton($option),
                 ]);
             }
 
             if ($entityAttribute == 'update_message') {
-                $tag->message = $action;
+                if ($this->validateText($action, 255)) {
+                    $tag->message = $action;
+                    $teleUser->session = null;
+                    $message = "Message updated";
+                    $option = [
+                        [
+                            ["text" => "🏷️ Create Tag"],
+                            ["text" => "📦 Get Tags"],
+                        ],
+                        [
+                            ["text" => "☕ Buy Me a Coffee"],
+                        ],
+                    ];
+                } else {
+                    $message = "Invalid message!";
+                    $option = [
+                        [
+                            ["text" => "❌ Cancel"],
+                            ["text" => "↪️ Use Default"],
+                        ],
+                    ];
+                }
                 $tag->save();
-
-                $teleUser->session = null;
                 $teleUser->save();
-
-                $message = "Message updated";
 
                 $response = $this->apiRequest('sendMessage', [
                     'chat_id' => $telegramId,
                     'text' => $message,
+                    'reply_markup' => $this->keyboardButton($option),
                 ]);
             }
         }
 
         return $response;
+    }
+
+    private function validatePhoneNumber($phoneNumber)
+    {
+        $phoneNumber = str_replace('+', '', $phoneNumber);
+        $phoneNumber = str_replace('-', '', $phoneNumber);
+        $phoneNumber = str_replace(' ', '', $phoneNumber);
+        $phoneNumber = str_replace('(', '', $phoneNumber);
+        $phoneNumber = str_replace(')', '', $phoneNumber);
+
+        if (preg_match('/[\p{L}]/u', $phoneNumber)) {
+            return false;
+        } else if (strlen($phoneNumber) <= 15) {
+            return $phoneNumber;
+        } else {
+            return false;
+        }
+    }
+
+    private function validateText($text, $length)
+    {
+        if (preg_match('/[\p{L}]/u', $text) && strlen($text) <= $length) {
+            return $text;
+        } else {
+            return false;
+        }
     }
 }
