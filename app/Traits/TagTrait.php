@@ -15,6 +15,14 @@ trait TagTrait
 
     private function getTag($entityId, $telegramId, $result)
     {
+        if (isset($result->message)) {
+            $messageId = $result->message->message_id;
+            $sendMessage = true;
+        } else if (isset($result->callback_query)) {
+            $messageId = $result->callback_query->message->message_id;
+            $sendMessage = false;
+        }
+
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
 
         if (!$teleUser) {
@@ -46,13 +54,22 @@ trait TagTrait
                     ],
                 ];
 
-                $response = $this->apiRequest('editMessageText', [
-                    'chat_id' => $telegramId,
-                    'message_id' => $result->callback_query->message->message_id,
-                    'text' => $message,
-                    'parse_mode' => 'html',
-                    'reply_markup' => $this->inlineKeyboardButton($option),
-                ]);
+                if ($sendMessage) {
+                    $response = $this->apiRequest('sendMessage', [
+                        'chat_id' => $telegramId,
+                        'text' => $message,
+                        'parse_mode' => 'html',
+                        'reply_markup' => $this->inlineKeyboardButton($option),
+                    ]);
+                } else {
+                    $response = $this->apiRequest('editMessageText', [
+                        'chat_id' => $telegramId,
+                        'message_id' => $messageId,
+                        'text' => $message,
+                        'parse_mode' => 'html',
+                        'reply_markup' => $this->inlineKeyboardButton($option),
+                    ]);
+                }
             } else {
                 $message = "No Tag Found!\n/create - create tag";
 
@@ -156,9 +173,7 @@ trait TagTrait
         if ($teleUser) {
             if (count($teleUser->tags)) {
                 $tag = Tag::where('contact_id', $entityId)->first();
-
-                $teleUser->session = "tag;$tag->contact_id;update_name";
-                $teleUser->save();
+                $this->setSession($teleUser, "tag", $tag->contact_id, "update_name");
 
                 $message = "Enter new name";
 
@@ -202,9 +217,7 @@ trait TagTrait
         if ($teleUser) {
             if (count($teleUser->tags)) {
                 $tag = Tag::where('contact_id', $entityId)->first();
-
-                $teleUser->session = "tag;$tag->contact_id;update_num";
-                $teleUser->save();
+                $this->setSession($teleUser, "tag", $tag->contact_id, "update_num");
 
                 $message = "Enter new Contact Number\n/unset - unset contact number";
 
@@ -249,9 +262,7 @@ trait TagTrait
         if ($teleUser) {
             if (count($teleUser->tags)) {
                 $tag = Tag::where('contact_id', $entityId)->first();
-
-                $teleUser->session = "tag;$tag->contact_id;update_header";
-                $teleUser->save();
+                $this->setSession($teleUser, "tag", $tag->contact_id, "update_header");
 
                 $message = "Enter new header";
 
@@ -296,9 +307,7 @@ trait TagTrait
         if ($teleUser) {
             if (count($teleUser->tags)) {
                 $tag = Tag::where('contact_id', $entityId)->first();
-
-                $teleUser->session = "tag;$tag->contact_id;update_description";
-                $teleUser->save();
+                $this->setSession($teleUser, "tag", $tag->contact_id, "update_description");
 
                 $message = "Enter new description";
 
@@ -343,9 +352,7 @@ trait TagTrait
         if ($teleUser) {
             if (count($teleUser->tags)) {
                 $tag = Tag::where('contact_id', $entityId)->first();
-
-                $teleUser->session = "tag;$tag->contact_id;update_message";
-                $teleUser->save();
+                $this->setSession($teleUser, "tag", $tag->contact_id, "update_message");
 
                 $message = "Enter new message";
 
@@ -431,8 +438,7 @@ trait TagTrait
         if ($teleUser) {
             if (count($teleUser->tags)) {
                 $tag = Tag::where('contact_id', $entityId)->first();
-                $teleUser->session = "tag;$tag->contact_id;delete";
-                $teleUser->save();
+                $this->setSession($teleUser, "tag", $tag->contact_id, "delete");
 
                 $message = "Are you sure to delete this tag?";
 
@@ -481,8 +487,7 @@ trait TagTrait
                 $tag = Tag::where('contact_id', $entityId)->first();
                 $tag->delete();
 
-                $teleUser->session = null;
-                $teleUser->save();
+                $this->clearSession($teleUser);
 
                 $message = "Tag Deleted!";
 
@@ -520,9 +525,7 @@ trait TagTrait
 
         if ($teleUser) {
             if (count($teleUser->tags)) {
-                $teleUser->session = null;
-                $teleUser->save();
-
+                $this->clearSession($teleUser);
                 $response = $this->getTag($entityId, $telegramId, $result);
             } else {
                 $message = "No Tag Found!\n/create - create tag";
@@ -602,5 +605,289 @@ trait TagTrait
         } while (!$success || $count < 10);
 
         return $contact_id;
+    }
+
+    // Update Details Functions Here
+    private function setName($result)
+    {
+        $action = $result->message->text;
+        $telegramId = $result->message->from->id;
+
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $data = explode(";", $teleUser->session);
+
+        $response = false;
+        $entityId = $data[1];
+
+        $tag = Tag::where('contact_id', $entityId)->first();
+        if ($this->validateText($action, 50)) {
+            $tag->name = $action;
+            $tag->save();
+
+            $option = [
+                [
+                    ["text" => "🏷️ Create Tag"],
+                    ["text" => "📦 Get Tags"],
+                ],
+                [
+                    ["text" => "☕ Buy Me a Coffee"],
+                ],
+            ];
+
+            $this->clearSession($teleUser);
+            $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => "Tag Created!",
+                'reply_markup' => $this->keyboardButton($option),
+            ]);
+
+            $response = $this->getTag($entityId, $telegramId, $result);
+        } else {
+            $message = "Invalid name!";
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+            ]);
+        }
+
+        return $response;
+    }
+
+    private function updateName($result)
+    {
+        $action = $result->message->text;
+        $telegramId = $result->message->from->id;
+
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $data = explode(";", $teleUser->session);
+
+        $response = false;
+        $entityId = $data[1];
+
+        $tag = Tag::where('contact_id', $entityId)->first();
+        if ($this->validateText($action, 50)) {
+            $tag->name = $action;
+            $option = [
+                [
+                    ["text" => "🏷️ Create Tag"],
+                    ["text" => "📦 Get Tags"],
+                ],
+                [
+                    ["text" => "☕ Buy Me a Coffee"],
+                ],
+            ];
+
+            $teleUser->save();
+            $this->clearSession($teleUser);
+
+            $message = "Name updated";
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+                'reply_markup' => $this->keyboardButton($option),
+            ]);
+        } else {
+            $message = "Invalid name!";
+            $response = $this->apiRequest('sendMessage', [
+                'chat_id' => $telegramId,
+                'text' => $message,
+            ]);
+        }
+
+        return $response;
+    }
+
+    private function updateNum($result)
+    {
+        $action = $result->message->text;
+        $telegramId = $result->message->from->id;
+
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $data = explode(";", $teleUser->session);
+
+        $response = false;
+        $entityId = $data[1];
+
+        $tag = Tag::where('contact_id', $entityId)->first();
+        $option = [
+            [
+                ["text" => "🏷️ Create Tag"],
+                ["text" => "📦 Get Tags"],
+            ],
+            [
+                ["text" => "☕ Buy Me a Coffee"],
+            ],
+        ];
+
+        if ($action == "/unset" || $action == '↪️ Unset Number') {
+            $tag->contact_number = null;
+            $message = "Contact Number deleted";
+
+            $this->clearSession($teleUser);
+        } else if ($this->validatePhoneNumber($action)) {
+            $tag->contact_number = $action;
+            $message = "Contact Number updated";
+
+            $this->clearSession($teleUser);
+        } else {
+            $message = "Invalid Contact Number";
+            $option = [
+                [
+                    ["text" => "❌ Cancel"],
+                    ["text" => "↪️ Unset Number"],
+                ],
+            ];
+        }
+        $tag->save();
+
+        $response = $this->apiRequest('sendMessage', [
+            'chat_id' => $telegramId,
+            'text' => $message,
+            'reply_markup' => $this->keyboardButton($option),
+        ]);
+
+        return $response;
+    }
+
+    private function updateHeader($result)
+    {
+        $action = $result->message->text;
+        $telegramId = $result->message->from->id;
+
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $data = explode(";", $teleUser->session);
+
+        $response = false;
+        $entityId = $data[1];
+
+        $tag = Tag::where('contact_id', $entityId)->first();
+        if ($action == "↪️ Use Default") $action = "Contact Me";
+
+        if ($this->validateText($action, 20)) {
+            $tag->header = $action;
+            $message = "Header updated";
+            $option = [
+                [
+                    ["text" => "🏷️ Create Tag"],
+                    ["text" => "📦 Get Tags"],
+                ],
+                [
+                    ["text" => "☕ Buy Me a Coffee"],
+                ],
+            ];
+            $this->clearSession($teleUser);
+        } else {
+            $message = "Invalid header!";
+            $option = [
+                [
+                    ["text" => "❌ Cancel"],
+                    ["text" => "↪️ Use Default"],
+                ],
+            ];
+        }
+        $tag->save();
+
+        $response = $this->apiRequest('sendMessage', [
+            'chat_id' => $telegramId,
+            'text' => $message,
+            'reply_markup' => $this->keyboardButton($option),
+        ]);
+
+        return $response;
+    }
+
+    private function updateDescription($result)
+    {
+        $action = $result->message->text;
+        $telegramId = $result->message->from->id;
+
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $data = explode(";", $teleUser->session);
+
+        $response = false;
+        $entityId = $data[1];
+
+        $tag = Tag::where('contact_id', $entityId)->first();
+        if ($action == "↪️ Use Default") $action = "Send me a message in case of emergency";
+
+        if ($this->validateText($action, 50)) {
+            $tag->description = $action;
+            $message = "Description updated";
+            $option = [
+                [
+                    ["text" => "🏷️ Create Tag"],
+                    ["text" => "📦 Get Tags"],
+                ],
+                [
+                    ["text" => "☕ Buy Me a Coffee"],
+                ],
+            ];
+            $this->clearSession($teleUser);
+        } else {
+            $message = "Invalid description!";
+            $option = [
+                [
+                    ["text" => "❌ Cancel"],
+                    ["text" => "↪️ Use Default"],
+                ],
+            ];
+        }
+        $tag->save();
+
+        $response = $this->apiRequest('sendMessage', [
+            'chat_id' => $telegramId,
+            'text' => $message,
+            'reply_markup' => $this->keyboardButton($option),
+        ]);
+
+        return $response;
+    }
+
+    private function updateMessage($result)
+    {
+        $action = $result->message->text;
+        $telegramId = $result->message->from->id;
+
+        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $data = explode(";", $teleUser->session);
+
+        $response = false;
+        $entityId = $data[1];
+
+        $tag = Tag::where('contact_id', $entityId)->first();
+        if ($action == "↪️ Use Default") $action = "Hye there! Send me a message in case of emergency";
+
+        if ($this->validateText($action, 255)) {
+            $tag->message = $action;
+            $message = "Message updated";
+            $option = [
+                [
+                    ["text" => "🏷️ Create Tag"],
+                    ["text" => "📦 Get Tags"],
+                ],
+                [
+                    ["text" => "☕ Buy Me a Coffee"],
+                ],
+            ];
+            $this->clearSession($teleUser);
+        } else {
+            $message = "Invalid message!";
+            $option = [
+                [
+                    ["text" => "❌ Cancel"],
+                    ["text" => "↪️ Use Default"],
+                ],
+            ];
+        }
+        $tag->save();
+        $teleUser->save();
+
+        $response = $this->apiRequest('sendMessage', [
+            'chat_id' => $telegramId,
+            'text' => $message,
+            'reply_markup' => $this->keyboardButton($option),
+        ]);
+
+        return $response;
     }
 }

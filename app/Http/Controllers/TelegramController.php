@@ -7,6 +7,7 @@ use App\Models\TelegramUser;
 use App\Traits\CommandTrait;
 use App\Traits\MakeComponents;
 use App\Traits\RequestTrait;
+use App\Traits\SessionTrait;
 use App\Traits\TagTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
@@ -17,6 +18,7 @@ class TelegramController extends Controller
     use MakeComponents;
     use TagTrait;
     use CommandTrait;
+    use SessionTrait;
 
     public function webhook()
     {
@@ -32,10 +34,9 @@ class TelegramController extends Controller
         $result = json_decode(file_get_contents('php://input'));
         $response = "Not The Expected Update Type";
 
-        // TODO : Check Response Type (message, callback_query, my_chat_member, etc)
         if (isset($result->message)) $response = $this->updateMessage($result);
         if (isset($result->callback_query)) $response = $this->updateCallbackQuery($result);
-        if (isset($result->my_chat_member)) $response = "My Chat Member";
+        if (isset($result->my_chat_member)) $response = $this->updateMyChatMember($result);
 
         return $response;
     }
@@ -51,6 +52,8 @@ class TelegramController extends Controller
             $response = $this->updateSession($result);
         } else if ($action == '/start') {
             $response = $this->startBot($result);
+        } else if ($action == '/help') {
+            $response = $this->getHelp($result);
         } else if ($action == '/create' || $action == '🏷️ Create Tag') {
             $response = $this->createTag($result);
         } else if ($action == '/tags' || $action == '📦 Get Tags') {
@@ -60,7 +63,7 @@ class TelegramController extends Controller
         } else {
             $response = $this->getCommands($result, null);
         }
-        
+
         return $response;
     }
 
@@ -95,6 +98,13 @@ class TelegramController extends Controller
             if ($entityType == 'tag' && $entityAttribute == 'cancel_delete') $response = $this->cancelDeleteTag($entityId, $result);
         }
 
+        return $response;
+    }
+
+    public function updateMyChatMember($result)
+    {
+        // Do nothing for now ...
+        $response = "My Chat Member";
         return $response;
     }
 }
