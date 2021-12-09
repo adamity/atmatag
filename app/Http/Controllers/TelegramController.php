@@ -14,11 +14,11 @@ use Illuminate\Support\Facades\URL;
 
 class TelegramController extends Controller
 {
-    use RequestTrait;
-    use MakeComponents;
-    use TagTrait;
     use CommandTrait;
+    use MakeComponents;
+    use RequestTrait;
     use SessionTrait;
+    use TagTrait;
 
     public function webhook()
     {

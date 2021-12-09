@@ -3,12 +3,12 @@
 namespace App\Traits;
 
 use App\Models\Tag;
+use App\Models\TelegramUser;
+use App\Traits\CommandTrait;
 use App\Traits\MakeComponents;
 use App\Traits\RequestTrait;
 use App\Traits\TagTrait;
 use App\Traits\ValidationTrait;
-use App\Traits\CommandTrait;
-use App\Models\TelegramUser;
 
 trait SessionTrait
 {

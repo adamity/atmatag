@@ -3,15 +3,15 @@
 namespace App\Traits;
 
 use App\Models\Tag;
+use App\Models\TelegramUser;
 use App\Traits\MakeComponents;
 use App\Traits\RequestTrait;
 use App\Traits\TagTrait;
-use App\Models\TelegramUser;
 
 trait CommandTrait
 {
-    use RequestTrait;
     use MakeComponents;
+    use RequestTrait;
     use TagTrait;
 
     private function getCommands($result, $text)

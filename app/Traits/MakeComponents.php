@@ -2,9 +2,6 @@
 
 namespace App\Traits;
 
-use App\Models\Tag;
-use App\Models\TelegramUser;
-
 trait MakeComponents
 {
     private function keyboardButton($option)
