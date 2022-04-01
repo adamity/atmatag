@@ -2,6 +2,6 @@
 
 @section('content')
 <div class="container">
-    <p>Landing page underconstruction</p>
+    <p>Landing page underconstruction!</p>
 </div>
 @endsection
