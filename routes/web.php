@@ -19,6 +19,6 @@ Route::get('/', function () {
     return view('pages.landing');
 });
 
-Route::get('/webhook', [TelegramController::class, 'webhook']);
+Route::get('/webhook', [TelegramController::class, 'webhook']); // Checked
 Route::get('/tag/{contact_id}', [MessageController::class, 'index'])->name('tag');
 Route::post('/send', [MessageController::class, 'send'])->name('send');

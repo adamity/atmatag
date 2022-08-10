@@ -19,4 +19,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::any('/'.env('TELEGRAM_TOKEN'), [TelegramController::class, 'index'])->name('webhook');
+Route::any('/' . env('TELEGRAM_TOKEN'), [TelegramController::class, 'index'])->name('webhook');
