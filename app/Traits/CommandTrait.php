@@ -4,22 +4,22 @@ namespace App\Traits;
 
 use App\Models\Tag;
 use App\Models\TelegramUser;
-use App\Traits\MakeComponents;
+use App\Traits\ComponentTrait;
 use App\Traits\RequestTrait;
 use App\Traits\TagTrait;
 
 trait CommandTrait
 {
-    use MakeComponents;
+    use ComponentTrait;
     use RequestTrait;
     use TagTrait;
 
-    private function getCommands($result, $text)
+    private function getCommands($request, $text)
     {
-        if (isset($result->message)) {
-            $telegramId = $result->message->from->id;
-        } else if (isset($result->callback_query)) {
-            $telegramId = $result->callback_query->from->id;
+        if (isset($request->message)) {
+            $telegramId = $request->message->from->id;
+        } else if (isset($request->callback_query)) {
+            $telegramId = $request->callback_query->from->id;
         }
 
         $message = "<b>Commands :</b> \n\n/create - create tag\n/tags - get tags";
@@ -45,12 +45,12 @@ trait CommandTrait
         return $response;
     }
 
-    private function startBot($result)
+    private function startBot($request)
     {
-        if (isset($result->message)) {
-            $telegramId = $result->message->from->id;
-        } else if (isset($result->callback_query)) {
-            $telegramId = $result->callback_query->from->id;
+        if (isset($request->message)) {
+            $telegramId = $request->message->from->id;
+        } else if (isset($request->callback_query)) {
+            $telegramId = $request->callback_query->from->id;
         }
 
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
@@ -62,27 +62,27 @@ trait CommandTrait
             $teleUser->save();
         }
 
-        $response = $this->getCommands($result, null);
+        $response = $this->getCommands($request, null);
         return $response;
     }
 
-    private function getHelp($result)
+    private function getHelp($request)
     {
-        $response = $this->getCommands($result, 'help');
+        $response = $this->getCommands($request, 'help');
         return $response;
     }
 
-    private function createTag($result)
+    private function createTag($request)
     {
-        $telegramId = $result->message->from->id;
+        $telegramId = $request->message->from->id;
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
 
         if (!$teleUser) {
-            $response = $this->startBot($result);
+            $response = $this->startBot($request);
         } else {
             if (count($teleUser->tags) >= $teleUser->tag_limit) {
                 $message = "Limit exceed!";
-                $response = $this->getCommands($result, $message);
+                $response = $this->getCommands($request, $message);
                 return $response;
             } else {
                 $contact_id = $this->generateContactId();
@@ -96,7 +96,7 @@ trait CommandTrait
                 $tag->toggle = 1;
                 $tag->save();
 
-                $this->setSession($teleUser, "tag", $tag->contact_id, "name");
+                $this->setSession($teleUser, $tag->contact_id, "name");
                 $message = "What should we call this tag?";
             }
 
@@ -116,13 +116,13 @@ trait CommandTrait
         return $response;
     }
 
-    private function getTags($result)
+    private function getTags($request)
     {
-        if (isset($result->message)) {
-            $telegramId = $result->message->from->id;
+        if (isset($request->message)) {
+            $telegramId = $request->message->from->id;
             $sendMessage = true;
-        } else if (isset($result->callback_query)) {
-            $telegramId = $result->callback_query->from->id;
+        } else if (isset($request->callback_query)) {
+            $telegramId = $request->callback_query->from->id;
             $sendMessage = false;
         }
 
@@ -136,8 +136,8 @@ trait CommandTrait
                 foreach ($tags as $tag) {
                     $temp = [
                         [
-                            "text" => $tag->name,
-                            "callback_data" => "tag;$tag->contact_id;get"
+                            "text" => $tag->name ?? "Untitled",
+                            "callback_data" => "$tag->contact_id;get"
                         ]
                     ];
 
@@ -155,7 +155,7 @@ trait CommandTrait
                 } else {
                     $response = $this->apiRequest('editMessageText', [
                         'chat_id' => $telegramId,
-                        'message_id' => $result->callback_query->message->message_id,
+                        'message_id' => $request->callback_query->message->message_id,
                         'text' => $message,
                         'reply_markup' => $this->inlineKeyboardButton($option),
                     ]);
@@ -180,9 +180,9 @@ trait CommandTrait
         return $response;
     }
 
-    private function cancelOperation($result)
+    private function cancelOperation($request)
     {
-        $telegramId = $result->message->from->id;
+        $telegramId = $request->message->from->id;
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
 
         $message = "No active command.";
@@ -193,7 +193,7 @@ trait CommandTrait
                 $entityType = $session[0];
                 $entityId = $session[1];
                 $entityAttribute = $session[2];
-        
+
                 if ($entityType == 'tag' && $entityAttribute == 'name') {
                     $tag = Tag::where('contact_id', $entityId)->first();
                     $tag->delete();

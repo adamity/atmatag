@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Tag;
 use App\Models\TelegramUser;
 use App\Traits\CommandTrait;
-use App\Traits\MakeComponents;
+use App\Traits\ComponentTrait;
 use App\Traits\RequestTrait;
 use App\Traits\SessionTrait;
 use App\Traits\TagTrait;
@@ -15,11 +15,12 @@ use Illuminate\Support\Facades\URL;
 class TelegramController extends Controller
 {
     use CommandTrait;
-    use MakeComponents;
+    use ComponentTrait;
     use RequestTrait;
     use SessionTrait;
     use TagTrait;
 
+    // Checked
     public function webhook()
     {
         $url = preg_replace("/^http:/i", "https:", url(route('webhook')));
@@ -29,79 +30,117 @@ class TelegramController extends Controller
         ]) ? ['success'] : ['something wrong'];
     }
 
+    // Checked
     public function index()
     {
-        $result = json_decode(file_get_contents('php://input'));
-        $response = "Not The Expected Update Type";
+        $request = json_decode(file_get_contents('php://input'));
+        $response = "Not the expected update type.";
+        // More about update types: https://core.telegram.org/bots/api#update
 
-        if (isset($result->message)) $response = $this->updateMessage($result);
-        if (isset($result->callback_query)) $response = $this->updateCallbackQuery($result);
-        if (isset($result->my_chat_member)) $response = $this->updateMyChatMember($result);
+        if (isset($request->message)) {
+            $response = $this->updateMessage($request);
+        } else if (isset($request->callback_query)) {
+            $response = $this->updateCallbackQuery($request);
+        } else if (isset($request->my_chat_member)) {
+            $response = $this->updateMyChatMember($request);
+        }
 
         return $response;
     }
 
-    public function updateMessage($result)
+    // Checked, except for the function call inside the condition
+    public function updateMessage($request)
     {
-        $action = $result->message->text;
-
-        $telegramId = $result->message->from->id;
-        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $action = $request->message->text;
+        $teleUser = TelegramUser::where('telegram_id', $request->message->from->id)->first();
 
         if ($teleUser && $teleUser->session) {
-            $response = $this->updateSession($result);
-        } else if ($action == '/start') {
-            $response = $this->startBot($result);
-        } else if ($action == '/help') {
-            $response = $this->getHelp($result);
-        } else if ($action == '/create' || $action == '🏷️ Create Tag') {
-            $response = $this->createTag($result);
-        } else if ($action == '/tags' || $action == '📦 Get Tags') {
-            $response = $this->getTags($result);
-        } else if ($action == '/cancel' || $action == '❌ Cancel') {
-            $response = $this->cancelOperation($result);
-        } else {
-            $response = $this->getCommands($result, null);
+            $response = $this->updateSession($request);
+        } else switch ($action) {
+            case '/start':
+                $response = $this->startBot($request);
+                break;
+            case '/help':
+                $response = $this->getHelp($request);
+                break;
+            case '/create':
+            case '🏷️ Create Tag':
+                $response = $this->createTag($request);
+                break;
+            case '/tags':
+            case '📦 Get Tags':
+                $response = $this->getTags($request);
+                break;
+            case '/cancel':
+            case '❌ Cancel':
+                $response = $this->cancelOperation($request);
+                break;
+            default:
+                $response = $this->getCommands($request, null);
+                break;
         }
 
         return $response;
     }
 
-    public function updateCallbackQuery($result)
+    // Checked, except for the function call inside the condition
+    public function updateCallbackQuery($request)
     {
-        $data = $result->callback_query->data;
-        $data = explode(";", $data);
-        $response = $data;
+        $data = explode(";", $request->callback_query->data);
+        $response = "Not the expected callback query data.";
 
-        $telegramId = $result->callback_query->from->id;
+        if (count($data) == 2) {
+            $tagId = $data[0];
+            $action = $data[1];
 
-        if (count($data) == 3) {
-            $entityType = $data[0];
-            $entityId = $data[1];
-            $entityAttribute = $data[2];
-    
-            if ($entityType == 'tag' && $entityAttribute == 'get') $response = $this->getTag($entityId, $telegramId, $result);
-            if ($entityType == 'tag' && $entityAttribute == 'edit') $response = $this->editTag($entityId, $result);
-            if ($entityType == 'tag' && $entityAttribute == 'delete') $response = $this->deleteTag($entityId, $result);
-            if ($entityType == 'tag' && $entityAttribute == 'toggle') $response = $this->toggleTag($entityId, $result);
-            if ($entityType == 'tag' && $entityAttribute == 'qr_code') $response = $this->getQrCode($entityId, $result);
-            if ($entityType == 'tag' && $entityAttribute == 'tag_list') $response = $this->getTags($result);
-
-            if ($entityType == 'tag' && $entityAttribute == 'edit_name') $response = $this->editName($entityId, $result);
-            if ($entityType == 'tag' && $entityAttribute == 'edit_num') $response = $this->editNum($entityId, $result);
-            if ($entityType == 'tag' && $entityAttribute == 'edit_header') $response = $this->editHeader($entityId, $result);
-
-            if ($entityType == 'tag' && $entityAttribute == 'edit_description') $response = $this->editDescription($entityId, $result);
-            if ($entityType == 'tag' && $entityAttribute == 'edit_message') $response = $this->editMessage($entityId, $result);
-
-            if ($entityType == 'tag' && $entityAttribute == 'confirm_delete') $response = $this->confirmDeleteTag($entityId, $result);
-            if ($entityType == 'tag' && $entityAttribute == 'cancel_delete') $response = $this->cancelDeleteTag($entityId, $result);
+            switch ($action) {
+                case 'get':
+                    $response = $this->getTag($tagId, $request);
+                    break;
+                case 'edit':
+                    $response = $this->editTag($tagId, $request);
+                    break;
+                case 'delete':
+                    $response = $this->deleteTag($tagId, $request);
+                    break;
+                case 'toggle':
+                    $response = $this->toggleTag($tagId, $request);
+                    break;
+                case 'qr_code':
+                    $response = $this->getQrCode($tagId, $request);
+                    break;
+                case 'tag_list':
+                    $response = $this->getTags($request);
+                    break;
+                case 'edit_name':
+                    $response = $this->editName($tagId, $request);
+                    break;
+                case 'edit_num':
+                    $response = $this->editNum($tagId, $request);
+                    break;
+                case 'edit_header':
+                    $response = $this->editHeader($tagId, $request);
+                    break;
+                case 'edit_description':
+                    $response = $this->editDescription($tagId, $request);
+                    break;
+                case 'edit_message':
+                    $response = $this->editMessage($tagId, $request);
+                    break;
+                case 'confirm_delete':
+                    $response = $this->confirmDeleteTag($tagId, $request);
+                    break;
+                case 'cancel_delete':
+                    $response = $this->cancelDeleteTag($tagId, $request);
+                    break;
+            }
         }
 
         return $response;
     }
 
-    public function updateMyChatMember($result)
+    // Keeped for deactivation feature
+    public function updateMyChatMember($request)
     {
         // Do nothing for now ...
         $response = "My Chat Member";

@@ -2,7 +2,7 @@
 
 namespace App\Traits;
 
-trait MakeComponents
+trait ComponentTrait
 {
     private function keyboardButton($option)
     {

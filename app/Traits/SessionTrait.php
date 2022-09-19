@@ -5,7 +5,7 @@ namespace App\Traits;
 use App\Models\Tag;
 use App\Models\TelegramUser;
 use App\Traits\CommandTrait;
-use App\Traits\MakeComponents;
+use App\Traits\ComponentTrait;
 use App\Traits\RequestTrait;
 use App\Traits\TagTrait;
 use App\Traits\ValidationTrait;
@@ -13,46 +13,56 @@ use App\Traits\ValidationTrait;
 trait SessionTrait
 {
     use RequestTrait;
-    use MakeComponents;
+    use ComponentTrait;
     use TagTrait;
     use ValidationTrait;
     use CommandTrait;
 
-    private function setSession($user, $entityType, $entityId, $entityAttribute)
+    // Checked
+    private function setSession($teleUser, $tagId, $action)
     {
-        $user->session = "$entityType;$entityId;$entityAttribute";
-        $user->save();
+        $teleUser->session = "$tagId;$action";
+        $teleUser->save();
     }
 
-    private function clearSession($user)
+    // Checked
+    private function clearSession($teleUser)
     {
-        $user->session = null;
-        $user->save();
+        $teleUser->session = null;
+        $teleUser->save();
     }
 
-    private function updateSession($result)
+    // Checked, except for the cancelOperation() function call
+    private function updateSession($request)
     {
-        $action = $result->message->text;
-        $telegramId = $result->message->from->id;
-
-        $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $action = $request->message->text;
+        $teleUser = TelegramUser::where('telegram_id', $request->message->from->id)->first();
         $data = explode(";", $teleUser->session);
 
-        $response = false;
-
-        $entityType = $data[0];
-        $entityAttribute = $data[2];
-
         if ($action == "/cancel" || $action == '❌ Cancel') {
-            $response = $this->cancelOperation($result);
-        } else if ($entityType == 'tag') {
-            if ($entityAttribute == 'name') $response = $this->setName($result);
-            else if ($entityAttribute == 'update_name') $response = $this->updateName($result);
-            else if ($entityAttribute == 'update_num') $response = $this->updateNum($result);
-            else if ($entityAttribute == 'update_header') $response = $this->updateHeader($result);
-            else if ($entityAttribute == 'update_description') $response = $this->updateDescription($result);
-            else if ($entityAttribute == 'update_message') $response = $this->updateMessage($result);
-            else $response = $this->cancelOperation($teleUser);
+            $response = $this->cancelOperation($request);
+        } else switch ($data[1]) {
+            case 'name':
+                $response = $this->setName($request);
+                break;
+            case 'update_name':
+                $response = $this->updateName($request);
+                break;
+            case 'update_num':
+                $response = $this->updateNum($request);
+                break;
+            case 'update_header':
+                $response = $this->updateHeader($request);
+                break;
+            case 'update_description':
+                $response = $this->updateDescription($request);
+                break;
+            case 'update_message':
+                $response = $this->updateMessage($request);
+                break;
+            default:
+                $response = $this->cancelOperation($teleUser);
+                break;
         }
 
         return $response;
