@@ -39,7 +39,6 @@ trait TextTrait
         return $text;
     }
 
-    // $message = "Contact Number deleted";
     private function unsetNumberText()
     {
         $text = "Contact Number deleted";
@@ -106,10 +105,22 @@ trait TextTrait
         return $text;
     }
 
-    // $message = "Invalid message!";
     private function messageNotValidText()
     {
         $text = "Invalid message!";
+        return $text;
+    }
+
+    private function commandText($text = null)
+    {
+        $message = "<b>Commands :</b> \n\n/create - create tag\n/tags - get tags";
+        if ($text) $message = $text . "\n\n" . $message;
+        return $message;
+    }
+
+    private function createTagText()
+    {
+        $text = "What should we call this tag?";
         return $text;
     }
 }

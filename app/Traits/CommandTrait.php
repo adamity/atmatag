@@ -7,23 +7,24 @@ use App\Models\TelegramUser;
 use App\Traits\ComponentTrait;
 use App\Traits\RequestTrait;
 use App\Traits\TagTrait;
+use App\Traits\TextTrait;
 
 trait CommandTrait
 {
     use ComponentTrait;
     use RequestTrait;
     use TagTrait;
+    use TextTrait;
 
     private function getCommands($request, $text)
     {
+        $method = "sendMessage";
+
         if (isset($request->message)) {
             $telegramId = $request->message->from->id;
         } else if (isset($request->callback_query)) {
             $telegramId = $request->callback_query->from->id;
         }
-
-        $message = "<b>Commands :</b> \n\n/create - create tag\n/tags - get tags";
-        if ($text) $message = $text . "\n\n" . $message;
 
         $option = [
             [
@@ -35,14 +36,12 @@ trait CommandTrait
             ],
         ];
 
-        $response = $this->apiRequest('sendMessage', [
-            'chat_id' => $telegramId,
-            'text' => $message,
-            'parse_mode' => 'html',
-            'reply_markup' => $this->keyboardButton($option),
-        ]);
+        $params['chat_id'] = $telegramId;
+        $params['parse_mode'] = 'html';
+        $params['text'] = $this->commandText($text);
+        $params['reply_markup'] = $this->keyboardButton($option);
 
-        return $response;
+        return $this->apiRequest($method, $params);
     }
 
     private function startBot($request)
@@ -62,20 +61,22 @@ trait CommandTrait
             $teleUser->save();
         }
 
-        $response = $this->getCommands($request, null);
-        return $response;
+        return $this->getCommands($request, null);
     }
 
     private function getHelp($request)
     {
-        $response = $this->getCommands($request, 'help');
-        return $response;
+        return $this->getCommands($request, 'help');
     }
 
+    // Last here
     private function createTag($request)
     {
+        $method = "sendMessage";
         $telegramId = $request->message->from->id;
+
         $teleUser = TelegramUser::where('telegram_id', $telegramId)->first();
+        $params['chat_id'] = $telegramId;
 
         if (!$teleUser) {
             $response = $this->startBot($request);
@@ -96,21 +97,18 @@ trait CommandTrait
                 $tag->toggle = 1;
                 $tag->save();
 
+                $option = [
+                    [
+                        ["text" => "❌ Cancel"],
+                    ],
+                ];
+
                 $this->setSession($teleUser, $tag->contact_id, "name");
-                $message = "What should we call this tag?";
+                $params['text'] = $this->createTagText();
+                $params['reply_markup'] = $this->keyboardButton($option);
             }
 
-            $option = [
-                [
-                    ["text" => "❌ Cancel"],
-                ],
-            ];
-
-            $response = $this->apiRequest('sendMessage', [
-                'chat_id' => $telegramId,
-                'text' => $message,
-                'reply_markup' => $this->keyboardButton($option),
-            ]);
+            $response = $this->apiRequest($method, $params);
         }
 
         return $response;
