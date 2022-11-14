@@ -19,12 +19,12 @@ class MessageController extends Controller
             $message = $tag->message;
 
             if ($tag->toggle) {
-                return view('message.index', compact('contact_id', 'contact_number', 'message'));
+                return view('message', compact('contact_id', 'contact_number', 'message'));
             } else {
-                echo 'Tag Disabled!';
+                return view('tag_disabled');
             }
         } else {
-            echo 'Tag Not Exist!';
+            return view('not_found');
         }
     }
 

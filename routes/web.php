@@ -16,8 +16,8 @@ use App\Http\Controllers\MessageController;
 */
 
 Route::get('/', function () {
-    return view('pages.landing');
-});
+    return view('welcome');
+})->name('home');
 
 Route::get('/webhook', [TelegramController::class, 'webhook']); // Checked
 Route::get('/tag/{contact_id}', [MessageController::class, 'index'])->name('tag');
