@@ -35,6 +35,12 @@
 
 @section('js')
     <script>
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
         $('#alert-message').hide().removeClass("d-none");
         $('#alert-error').hide().removeClass("d-none");
         $('#message').val('');
