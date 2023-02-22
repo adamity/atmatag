@@ -59,7 +59,7 @@
 
                 $.ajax({
                     type: 'POST',
-                    url: "{{ route('send') }}",
+                    url: "https://atmatag.zulkiflizin.com/send",
                     data:{
                         _token: '{{ csrf_token() }}',
                         message: message,
