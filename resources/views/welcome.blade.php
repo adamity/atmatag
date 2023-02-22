@@ -6,6 +6,7 @@
             <img src="{{ asset('images/atmatag_full_2.png') }}" alt="atmatag logo" class="img-fluid height-150 border border-3 rounded-circle mb-4">
             <p class="fw-bold fs-1">AtmaTag</p>
             <p class="lead fs-4 mb-5">Gets Lost Items Back to You</p>
+            <p class="d-inline-block bg-danger rounded-pill text-white user-select-none small fw-semibold px-3 py-1 mb-5" data-bs-toggle="tooltip" data-bs-title="This is a demo site, so the shorten link will be deleted without notice.">Demo Only ⓘ</p>
 
             <a href="https://t.me/AtmaTagBot" target="_blank" class="btn btn-sm btn-outline-light rounded-pill mx-auto">
                 <div class="d-flex align-items-center">
@@ -15,4 +16,11 @@
             </a>
         </div>
     </div>
+@endsection
+
+@section('js')
+    <script>
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    </script>
 @endsection
