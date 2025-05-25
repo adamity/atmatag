@@ -220,4 +220,24 @@ trait CommandTrait
 
         return $response;
     }
+
+    private function buyMeACoffee($request)
+    {
+        $telegramId = $request->message->from->id;
+        $message = "If you like my work, you can support me by buying me a coffee! \n\n";
+        $message .= "Click the button below to buy me a coffee.";
+        $option = [
+            [
+                ["text" => "☕ Buy Me a Coffee", "url" => "https://buymeacoffee.com/consistentcat"],
+            ],
+        ];
+
+        $response = $this->apiRequest('sendMessage', [
+            'chat_id' => $telegramId,
+            'text' => $message,
+            'reply_markup' => $this->inlineKeyboardButton($option),
+        ]);
+
+        return $response;
+    }
 }

@@ -75,6 +75,9 @@ class TelegramController extends Controller
             case '❌ Cancel':
                 $response = $this->cancelOperation($request);
                 break;
+            case '☕ Buy Me a Coffee':
+                $response = $this->buyMeACoffee($request);
+                break;
             default:
                 $response = $this->getCommands($request, null);
                 break;

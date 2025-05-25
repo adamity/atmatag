@@ -8,7 +8,6 @@
             <p class="lead fs-4 mb-5">Sorry, the tag you are looking for does not exist.</p>
             <p class="lead fs-4 mb-5">Try AtmaTag now!<br>No registration, just click the button below.</p>
 
-            <p class="d-inline-block bg-danger rounded-pill text-white user-select-none small fw-semibold px-3 py-1 mb-5" data-bs-toggle="tooltip" data-bs-title="This is a demo site, the data will be deleted without notice.">Demo Only ⓘ</p>
             <a href="https://t.me/AtmaTagBot" target="_blank" class="btn btn-sm btn-outline-light rounded-pill mx-auto">
                 <div class="d-flex align-items-center">
                     <i class="fs-4 bi bi-telegram"></i>
@@ -17,11 +16,4 @@
             </a>
         </div>
     </div>
-@endsection
-
-@section('js')
-    <script>
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
-    </script>
 @endsection
